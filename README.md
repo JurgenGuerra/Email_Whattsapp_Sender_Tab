@@ -124,6 +124,28 @@ html = """\
 </html>
 """
  ```
+Una vez ingresados el mensaje en ambas formas (como texto plano y como codigo html) se procede a componer un solo mensaje, para eso se utiliza la librería previamente  importanda MIMEText, esta nos permite agrupar 2 partes diferentes de texto, una en html y la otra en texto plano.
  
+```python
+part1 = MIMEText(text, "plain")
+part2 = MIMEText(html, "html")
+message.attach(part1)
+message.attach(part2)
+ ```
+ 
+ ### Conexión bajo el protocolo SMTP
+ El  codigo propuesto en esta parte utiliza la libreria smtp de python, esta libreria a suvez utiliza el protocolo de comunicación smtp, que es el mismo que usualmente usan los servicios tradicionales de correos para enviar y recibir mensajes.
+ 
+```python
+context = ssl.create_default_context()
+with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+    server.login(sender_email, password)
+    server.sendmail(
+        sender_email, receiver_email, message.as_string()
+    )
+ 
+```
+la sentencia `context = ssl.create_default_context()` genera una conexion segura a la capa de aplicación, pues es en esta en la que se pueden utilizar directamente los protocolos de comunicación (telnet, http, smtp, ftp), una vez generado este acceso, se envia una señal utlizando el protocolo SMTP y el puerto 465.
+Para la configuración de este envío se necesitan parámetros como el correo que se  utilizará como sender, su contraseña, y el mensaje.
 
-
+# UNDER CONSTRUCTION . . .
