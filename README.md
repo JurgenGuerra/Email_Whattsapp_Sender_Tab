@@ -134,7 +134,7 @@ message.attach(part2)
  ```
  
  ### Conexión bajo el protocolo SMTP
- El  codigo propuesto en esta parte utiliza la libreria smtp de python, esta libreria a suvez utiliza el protocolo de comunicación smtp, que es el mismo que usualmente usan los servicios tradicionales de correos para enviar y recibir mensajes.
+ El  codigo propuesto en esta parte utiliza la libreria smtp de python, esta libreria a su vez utiliza el protocolo de comunicación smtp, que es el mismo que usualmente usan los servicios tradicionales de correos para enviar y recibir mensajes.
  
 ```python
 context = ssl.create_default_context()
@@ -147,5 +147,133 @@ with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
 ```
 la sentencia `context = ssl.create_default_context()` genera una conexion segura a la capa de aplicación, pues es en esta en la que se pueden utilizar directamente los protocolos de comunicación (telnet, http, smtp, ftp), una vez generado este acceso, se envia una señal utlizando el protocolo SMTP y el puerto 465.
 Para la configuración de este envío se necesitan parámetros como el correo que se  utilizará como sender, su contraseña, y el mensaje.
+
+## Automatización de envío masivo de correos
+Una vez entendido el uso básico del protocolo smtp y de la librería MIME para enviar mensajes entonces solo queda definir un codigo que permita iterar consecutivamente y enviar mensajes masivamente, obviamente la aplicación que en este repositorio se le dará, será el envio de los correos con la información personal que se requiere en un torneo de debate (link personal, estado de su inscripción). Obviamente a partir de este repositorio se pueden enviar una serie  de otros archivos, documentos, flyers, sonidos y toda clase de cosa que pueda ser enviada bajo el estandar MIME, para más información respecto a los límites en el envío de correos puede consultar la documentación en los siguientes links: [MIME Documentation](https://docs.python.org/2/library/email.mime.html),[RFC Editor](https://www.rfc-editor.org/search/rfc_search_detail.php)
+Para esta tercera parte, explicaré solo la parte que fue adherida para este rol, el código lo peude encontrar en el archivo `FinalSender.ipynb` :
+
+```python
+
+#MADE BY: Jürgen Anders Guerra Ramos
+#Active this https://myaccount.google.com/lesssecureapps in your google account and accept that you are who is doing this activity
+#Based in: https://realpython.com/python-send-email/#sending-fancy-emails
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import csv    
+
+
+sender_email = 'correo@gmail.com'
+password = 'clave'
+path=r'C:\dondeestentusdatos\datos.csv'
+
+def  send_mail(subject, msg, receiver_email):
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    # Create the plain-text and HTML version of your message
+    part1 = MIMEText(msg, "plain")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    message.attach(part1)
+    # Create secure connection with server and send email
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(
+            sender_email, receiver_email, message.as_string()
+        )
+        
+        
+file = open(path, newline = '')
+reader=csv.reader(file)
+header = next(reader) #extract the first line as header
+data = [row for row in reader]
+a=len(data)
+done =0
+
+for lel in range(a):
+    subject= 'Tema del correo'
+    Name =  data[lel][0] #lel is important cause it made me spent more than 4 hours debugging this app
+    kul=lel
+    lol=lel
+    Link = data[kul][2]
+    receiver = data[lol][1]
+    msg =  """
+Este tambien puede estar en html.
+
+Aqui va tu contenido
+"""
+    send_mail(subject,msg,receiver)
+    done = done +1
+    print(Name + " " + receiver+ " ............. Done [" +str(done)+"/"+str(a)+"]")
+```
+Este código a su vez trae 3 partes nuevas, extracción de datos de un archivo .csv, formulación del mensaje, definición de una función para poder enviar mensajes repetidas veces.
+### extracción de datos de un archivo .csv
+Se extraen los datos utilizando las sentencias usadas en diferentes partes del código.
+ Primero se define un path(dirección) donde se encuentran los datos `path=r'C:\dondeestentusdatos\datos.csv'`
+Después se utiliza la sentencia `open()` para pasar los datos a una matriz en python:
+``` python
+file = open(path, newline = '')
+reader=csv.reader(file)
+header = next(reader) #extract the first line as header
+data = [row for row in reader]
+a=len(data)
+done =0
+```
+Se define la primera columna como la cabecera que contiene los titulos de cada parámetro de los registros ingresados. Los demás datos son guardados en la matriz data. En la base de datos que yo administre solo se tenían los parámetros nombre, correo y link personal pero dependiendo de la aplicación se pueden aumentar más parámetros en los registros.
+
+### formulación del mensaje
+El mensaje se genera adjuntando datos que hemos extraido previamente del archivo csv, por ejemplo para la aplicación que yo utilice requería el nombre y el link personal de cada registro(ambos estarían incluidos en el mensaje) y el correo electrónico que es utilizado como recipiente del mensaje. Este mensaje puede tambien estar escrito en html y puede igual poder ser enviado fácilmente.
+
+``` python
+for lel in range(a):
+    subject= 'Tema del correo'
+    Name =  data[lel][0] #lel is important cause it made me spent more than 4 hours debugging this app
+    kul=lel
+    lol=lel
+    Link = data[kul][2]
+    receiver = data[lol][1]
+    msg =  """
+Este tambien puede estar en html.
+
+Aqui va tu contenido
+"""
+```
+Una vez diseñado el mensaje adecuado para cada uno de los correos se envían iterativamente, es por eso que se utiliza un bucle for para cada uno de los mensajes.
+```python
+    send_mail(subject,msg,receiver)
+    done = done +1
+    print(Name + " " + receiver+ " ............. Done [" +str(done)+"/"+str(a)+"]")
+```
+Estas útimas sentencias que también van dentro del bucle for utilizan una función definida líneas más arriba, después de eso, dependiendo del éxito del envío muestran en consola el estado de cada uno de los mensajes. 
+### Función send_mail
+Para poder enviar mensajes iterativamente se definió una función para enviar los emails, esta función requiere como variable de entrada el asunto, el mensaje y el correo al que se le debe de enviar el mensaje.
+```python
+def  send_mail(subject, msg, receiver_email):
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    # Create the plain-text and HTML version of your message
+    part1 = MIMEText(msg, "plain")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    message.attach(part1)
+    # Create secure connection with server and send email
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(
+            sender_email, receiver_email, message.as_string()
+        )
+        
+```
+La lógica existente dentro de esta función responde a lo que previamente explicamos en la sección anterior, es basicamente el primer código explicado, con unas ligeras modificaciones para poder recibir las variables que se requieren para su funcionamiento.
+
+## Alternativa de Wsp con selenium y WebDriver
 
 # UNDER CONSTRUCTION . . .
