@@ -1,44 +1,42 @@
 # Alternativa a SendGrid para el envío automático y funcional de correos a los equipos de lxs debatientes utilizando Python y HTML:
 Este repositorio contiene una alternativa al uso de SendGrid para enviar correos automaticamente. Esta iniciativa surge de la necesidad de enviar correos masivos y automáticos a lxs debatientes en los torneos de debate Parlamentario Británico, sin embargo su uso no esta *limitado* y se puede usar para practicamente cualquier aplicación que requiera enviar correos masivamente sin el uso de algún software de **paga**.
-Asimismo planteo una alternativa(igualmente automática) para aquellos casos en los que no se tiene el correo de lxs destinatarios o existe un error de tipeo. Esta alternativa usa mensajes automatizados a traves de **Whatsapp**, note que esta alternativa tambien puede ser de uso prioritario en caso se requiera una via de comunicación mas fluida que los correos.
+Asimismo se plantea una alternativa(igualmente automática), para aquellos casos en los que no se tiene el correo de lxs destinatarios o existe un error de tipeo. Esta alternativa usa mensajes automatizados a traves de **Whatsapp**, esta alternativa tambien puede ser de uso prioritario en caso se requiera una vía de comunicación más fluida que los correos.
 
-Entonces me centraré en explicar los módulos del código mas importantes, los codigos completos esta en este repositorio a su **libre** disposición.
-Las partes de esta explicación van en el siguiente orden:
+Me centraré en explicar los módulos del código más importantes, los códigos completos esta en este repositorio a su **libre** disposición.
+Las partes de más importantes en las que se dividirá este artículo serán:
 - Librerías a Instalar
 - Uso de smtp y MIME
-- Automatización de envío masivo de correos
+- Automatización del envío masivo de correos
 - Alternativa de Wsp con selenium y WebDriver
 
 Vamos :3
-## Librerías a Instalar
-Para empezar tiene que tener en cuenta 2 cosas, este código esta escrito en pytho debido a sufacilidad de programación y entendimiento pero eso no significa que se pueda replicar en otra clase de lenguajes, creo que en tanto el propósito se cumpla todo estará bien :3, lo segundo es que las librerias a utilizar solo facilitan el manejo de puertos y servidores necesarios para poder enviar un mensaje automaticamente. 
 
-Antes de importar las librerias estas deben ser instaladas con el comando `pip install`, solo instalaremos smtplib ya que MIME y csv vienen por defecto con el paquete de instalación de python, en caso no fuere asi existen diversos repositorios para la instanacion de estas otras librerías, basta con busca: "como instalar [inserte nombre de libreria] en python" y le aparecera un sinfin de tutoriales y repositorios:
+## Librerías a Instalar
+Para empezar tiene que tener en cuenta 2 cosas, este código esta escrito en pytho debido a su facilidad de programación y entendimiento pero eso no significa que se pueda replicar en otra clase de lenguajes, creo que en tanto el propósito se cumpla todo estará bien :3, lo segundo es que las librerias a utilizar solo facilitan el manejo de puertos y servidores necesarios para poder enviar un mensaje automaticamente. 
+
+Antes de importar las librerias estas deben ser instaladas con el comando `pip install`, solo instalaremos smtplib ya que MIME y csv vienen por defecto con el paquete de instalación de python, en caso no fuere asi existen diversos repositorios para la instalación de estas otras librerías, basta con buscar: "como instalar [inserte nombre de libreria] en python" y le aparecera un sinfin de tutoriales y repositorios:
 ```python
 pip install smtplib
 ```
-Las librerías a instalar se utilizan para implementar protocolos de envio de correos a traves de los puertos del computador, **smtplib** se usa para usar los Protocolos de envio de correos SMTP, **MIME** para estandarizar los correos y poder enviar correos en formato HTML (con imagenes, videos y links), **csv** sirve para manejar datos en formato coma separated Value que pueden ser facilmente editables con excel.
-Adicionalmente se debe instalar la libreria **selenium** para el uso de WebDriver (en la parte de la alternativa se vera mas a detalle esto).
+Las librerías a instalar se utilizan para implementar protocolos de envio de correos a traves de los puertos del computador, **smtplib** se usa para usar los Protocolos de envio de correos SMTP, **MIME** para estandarizar los correos y poder enviar correos en formato HTML (con imagenes, videos y links), **csv** sirve para manejar datos en formato Coma Separated Value que pueden ser facilmente editables con excel.
+Adicionalmente se debe instalar la librería **selenium** para el uso de WebDriver (en la parte de la alternativa se verá más a detalle esto).
 
 ```python
-
 import smtplib, ssl 
 from email.mime.text import MIMEText 
 from email.mime.multipart import MIMEMultipart 
 import csv 
- 
 ```
-una vez instalados e importados los paquetes de libreria procedere a explicar el codigo.
+una vez instalados e importados los paquetes de librería procederé a explicar el código.
 
 ## Uso del smtp y MIME 
-Para esta parte es importante comprender cada parte del codigo en especial la parte de la apertura del server. Aqui una correccion mucho de este codigo no es de mi propiedo si no mas bien la union de otros repositorios que explicaban temas parecidos, lo unico que hago es diseccionar un poco y despues automatizar el envio de estos correos.
-**IMPORTANTE** para el uso de los protocolos smtp es necesario que actives el acceso para aplicaciones menos seguras, se que puede parecer peligroso pero basicamente google tiene un sistema que solo permite el acceso a tu correo a muy pocas aplicaciones externas(por protección y por monopolización del mercado), obviamente una ves acabado el trabajo es necesario que la desactives nuevamente para evitar problemas.
-La activacion se hace a traves de [este link](https://myaccount.google.com/lesssecureapps) una vez ya dentro de cuenta de correo que usarás para el envío.
+Para esta parte es importante comprender cada parte del codigo en especial la parte de la apertura del server. Antes una aclaración importante, gran parte de este código es reusado, pues muchos de los temas aquí tratados son a su vez abordados en repositorios con temas parecidos, lo único que hago es diseccionar un poco y despues automatizar el envio de estos correos.
+**IMPORTANTE** para el uso de los protocolos smtp es necesario que actives el acceso para aplicaciones menos seguras de gmail, puede parecer peligroso pero basicamente google tiene un sistema que solo permite el acceso a tu correo a muy pocas aplicaciones externas(por protección y por monopolización del mercado), obviamente una ves acabado el trabajo es necesario que la desactives nuevamente para evitar problemas.
+La activacion se hace a traves de [este link](https://myaccount.google.com/lesssecureapps) una vez ya dentro de la cuenta de correo que usarás para el envío.
 ![alt text](https://raw.githubusercontent.com/JurgenGuerra/Env-o_Autom-tico_de_Correos/master/Lesssecureapps.PNG)
 
 Una vez esto hecho podemos comenzar a analizar el codigo.
 ```python
-
 #MIME WORKS WITH ANY ASCII CHARACTER ALSO ALLOWS TO SEND HTML, IMAGES, VIDEOS, AND OTHER STUFFS
 #FILL PASSWORD
 import smtplib, ssl
@@ -79,13 +77,12 @@ with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
     server.login(sender_email, password)
     server.sendmail(
         sender_email, receiver_email, message.as_string()
-    )
- 
+    ) 
 ```
-El codigo se divide en 3 partes principales, la declaración de correos(variables), declaración del mensaje a enviar(En formato HTML) y la creación de una conexion segura para el envio del correo mediante protocolo SMTP.
+El codigo se divide en 3 partes principales, la declaración de correos(variables), declaración del mensaje a enviar(En formato HTML) y la creación de una conexión segura para el envio del correo mediante protocolo SMTP.
 
 ### Declaración de correos
-En esta aprte se introducen esas variables a primera vista es bastante sencillo de entender primero se importan las librerias previamente instaladas:
+En esta primera parte se introducen las variables a usar durante el resto del código y se importan las librerías necesarias:
 ```python
 
 #MIME WORKS WITH ANY ASCII CHARACTER ALSO ALLOWS TO SEND HTML, IMAGES, VIDEOS, AND OTHER STUFFS
@@ -95,7 +92,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 ```
 
-Y se definen las variables sender y receiver email donde guardaremos los correos de quien reciba y quien envia, asimismo la clave del correo gmail que sirve para enviar. Asimismo definir el asunto del mensaje.
+Se definen las variables sender y receiver email donde guardaremos los correos de quien reciba y quien envia, asimismo la clave del correo gmail que sirve para enviar. Asimismo definir el asunto del mensaje.
 ```python
 sender_email = "sender@gmail.com"
 receiver_email = "receiver@outlook.es"
@@ -106,9 +103,8 @@ message["Subject"] = "Aqui va el asunto"
 message["From"] = sender_email
 message["To"] = receiver_email
  ```
- 
  ### Declaración del mensaje
-Como se dijo desde el inicio de este repositorio el mensaje sera codificado en HTML, esto nos permite introducir imagenes, listas, colores, links y una variedad de otros elementos que de manejarlos bien puede dar una vision muy profesional a los correos a enviar. Se suele codificar 2 mensajes(uno en texto plano `txt` y otro en html `html`)porque algunos servidores no procesan de manera adecuada el codigo html, cuando esto sucede el correo automaticamente muestra el mensaje en texto plano para evitar la perdida del correo enviado.
+Como se dijo desde el inicio de este repositorio el mensaje será codificado en HTML, esto nos permite introducir imágenes, listas, colores, links y una variedad de otros elementos que de manejarlos bien pueden dar un acabado muy profesional a los correos a enviar. Se codifican 2 mensajes(uno en texto plano `txt` y otro en html `html`)porque algunos servidores no procesan de manera adecuada el código html, cuando esto sucede el correo automaticamente muestra el mensaje en texto plano para evitar la pérdida del correo enviado.
 ```python
 text = """\
 En esta parte va el texto plano, quiere decir el texto sin codigo HTML en caso 
@@ -124,7 +120,7 @@ html = """\
 </html>
 """
  ```
-Una vez ingresados el mensaje en ambas formas (como texto plano y como codigo html) se procede a componer un solo mensaje, para eso se utiliza la librería previamente  importanda MIMEText, esta nos permite agrupar 2 partes diferentes de texto, una en html y la otra en texto plano.
+Una vez ingresados el mensaje en ambas formas (como texto plano y como codigo html) se procede a integrarlos en un solo mensaje, para eso se utiliza la librería previamente importanda MIMEText, esta nos permite agrupar 2 partes diferentes de texto, una en html y la otra en texto plano.
  
 ```python
 part1 = MIMEText(text, "plain")
@@ -134,7 +130,7 @@ message.attach(part2)
  ```
  
  ### Conexión bajo el protocolo SMTP
- El  codigo propuesto en esta parte utiliza la libreria smtp de python, esta libreria a su vez utiliza el protocolo de comunicación smtp, que es el mismo que usualmente usan los servicios tradicionales de correos para enviar y recibir mensajes.
+ El  código propuesto en esta parte utiliza la libreria smtp de python, esta libreria a su vez utiliza el protocolo de comunicación smtp(Simple Mail Transfer Protocol), que es el mismo que usualmente usan los servicios tradicionales de correos para enviar y recibir mensajes.
  
 ```python
 context = ssl.create_default_context()
@@ -149,8 +145,8 @@ la sentencia `context = ssl.create_default_context()` genera una conexion segura
 Para la configuración de este envío se necesitan parámetros como el correo que se  utilizará como sender, su contraseña, y el mensaje.
 
 ## Automatización de envío masivo de correos
-Una vez entendido el uso básico del protocolo smtp y de la librería MIME para enviar mensajes entonces solo queda definir un codigo que permita iterar consecutivamente y enviar mensajes masivamente, obviamente la aplicación que en este repositorio se le dará, será el envio de los correos con la información personal que se requiere en un torneo de debate (link personal, estado de su inscripción). Obviamente a partir de este repositorio se pueden enviar una serie  de otros archivos, documentos, flyers, sonidos y toda clase de cosa que pueda ser enviada bajo el estandar MIME, para más información respecto a los límites en el envío de correos puede consultar la documentación en los siguientes links: [MIME Documentation](https://docs.python.org/2/library/email.mime.html),[RFC Editor](https://www.rfc-editor.org/search/rfc_search_detail.php)
-Para esta tercera parte, explicaré solo la parte que fue adherida para este rol, el código lo peude encontrar en el archivo `FinalSender.ipynb` :
+Una vez entendido el uso básico del protocolo smtp y de la librería MIME para enviar mensajes entonces solo queda definir un codigo que permita iterar consecutivamente y enviar mensajes masivamente, obviamente la aplicación que en este repositorio se le dará, será el envio de los correos con la información personal que se requiere en un torneo de debate (link personal, estado de su inscripción). A partir de este repositorio se pueden enviar una serie  de otros archivos, documentos, flyers, sonidos y toda clase de cosa que pueda ser enviada bajo el estandar MIME, para más información respecto a los límites en el envío de correos puede consultar la documentación en los siguientes links: [MIME Documentation](https://docs.python.org/2/library/email.mime.html),[RFC Editor](https://www.rfc-editor.org/search/rfc_search_detail.php)
+Para esta tercera parte, explicaré solo la parte que fue adherida para este rol, el código lo puede encontrar en el archivo `FinalSender.ipynb` :
 
 ```python
 
@@ -208,7 +204,7 @@ Aqui va tu contenido
     done = done +1
     print(Name + " " + receiver+ " ............. Done [" +str(done)+"/"+str(a)+"]")
 ```
-Este código a su vez trae 3 partes nuevas, extracción de datos de un archivo .csv, formulación del mensaje, definición de una función para poder enviar mensajes repetidas veces.
+Este código a su vez trae 3 partes nuevas: extracción de datos de un archivo .csv, formulación del mensaje, definición de una función para poder enviar mensajes repetidas veces.
 ### extracción de datos de un archivo .csv
 Se extraen los datos utilizando las sentencias usadas en diferentes partes del código.
  Primero se define un path(dirección) donde se encuentran los datos `path=r'C:\dondeestentusdatos\datos.csv'`
@@ -244,7 +240,7 @@ Una vez diseñado el mensaje adecuado para cada uno de los correos se envían it
     done = done +1
     print(Name + " " + receiver+ " ............. Done [" +str(done)+"/"+str(a)+"]")
 ```
-Estas útimas sentencias que también van dentro del bucle for utilizan una función definida líneas más arriba, después de eso, dependiendo del éxito del envío muestran en consola el estado de cada uno de los mensajes. 
+Estas útimas sentencias que también van dentro del bucle for utilizan una función definida líneas más arriba, después de eso, dependiendo del éxito del envío muestran en consola el estado de cada uno de los mensajes.
 ### Función send_mail
 Para poder enviar mensajes iterativamente se definió una función para enviar los emails, esta función requiere como variable de entrada el asunto, el mensaje y el correo al que se le debe de enviar el mensaje.
 ```python
@@ -272,9 +268,9 @@ La lógica existente dentro de esta función responde a lo que previamente expli
 
 ## Alternativa de Wsp con selenium y WebDriver
 Usualmente las personas no suelen revisar sus correos, usualmente los mensajes que se envían por correo suelen perderse fácilmente, incluso muchas veces un error en el tipeo hace imposible poder contactarse con lxs oradorxs, por esos motivos planteo la posibilidad de enviar los url's personales y demás info de un torneo por Whatsapp. Esto necesariamente requiere permiso de lxs participantes y tiene limitaciones éticas en el uso de los números (al igual que en el uso de los correos).
-Hechas estas aclaraciones les presento el código, la parte final que automatiza el envío es identica a la que usa el código anterior. Probablemente lo explique con menos detalle que la idea inicial, pero en caso necesites alguna aclaración no dudes en escribirme.
-El código se basa en un paquete de python (`selenium` más especificamente `webdriver`)que permite el control automatico de un navegador, esto a través de la busqueda de aspectos específicos en su código HTML así como de acciones que se le puede ingresar o condiciones para que se cumplan estas acciones.
-Lo primero es importar llas librerías (previamente se tuvo que descarlas con `pip install selenium`):
+Hechas estas aclaraciones les presento el código, la parte final que automatiza el envío es identica a la que usa el código anterior. Probablemente lo explique con menos detalle que la idea inicial, pero en caso sea necesaria alguna alguna aclaración no duden en escribirme.
+El código se basa en un paquete de python (`selenium` más especificamente `webdriver`)que permite el control automático de un navegador, esto a través de la busqueda de aspectos específicos en su código HTML así como de acciones que se le puede ingresar o condiciones para que se cumplan estas acciones.
+Lo primero es importar las librerías (previamente se tuvo que descarlas con `pip install selenium`):
 ```python
 
 from selenium import webdriver
@@ -331,6 +327,6 @@ for n in range(a):
     done = done +1
     print(Name + " " + celular+ " ............. Done [" +str(done)+"/"+str(a)+"]")
 ```
-Este código permite enviar mensajes a personas por whatsapp si tiene los datos necesarios para hacerlo espero lo haya explicado adecuadamente, igual si alguna parte del código no es del todo comprensible rogaría que me lo hagan saber para poder clarificarla uwu.
+Este código también esta adjuntado en el repositorio con el nombre de `finalwspsender.ipynb`, esta diseñado para permitirle enviar mensajes a personas por whatsapp si tiene los datos necesarios para hacerlo. Espero haberlo explicado adecuadamente, igual si alguna parte del código no es del todo comprensible rogaría que me lo hagan saber para poder clarificarla uwu.
 
 
