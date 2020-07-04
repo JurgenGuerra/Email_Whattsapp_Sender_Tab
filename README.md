@@ -194,13 +194,11 @@ data = [row for row in reader]
 a=len(data)
 done =0
 
-for lel in range(a):
+for n in range(a):
     subject= 'Tema del correo'
-    Name =  data[lel][0] #lel is important cause it made me spent more than 4 hours debugging this app
-    kul=lel
-    lol=lel
-    Link = data[kul][2]
-    receiver = data[lol][1]
+    Name =  data[n][0] 
+    Link = data[n][2]
+    receiver = data[n][1]
     msg =  """
 Este tambien puede estar en html.
 
@@ -229,13 +227,11 @@ Se define la primera columna como la cabecera que contiene los titulos de cada p
 El mensaje se genera adjuntando datos que hemos extraido previamente del archivo csv, por ejemplo para la aplicación que yo utilice requería el nombre y el link personal de cada registro(ambos estarían incluidos en el mensaje) y el correo electrónico que es utilizado como recipiente del mensaje. Este mensaje puede tambien estar escrito en html y puede igual poder ser enviado fácilmente.
 
 ``` python
-for lel in range(a):
+for n in range(a):
     subject= 'Tema del correo'
-    Name =  data[lel][0] #lel is important cause it made me spent more than 4 hours debugging this app
-    kul=lel
-    lol=lel
-    Link = data[kul][2]
-    receiver = data[lol][1]
+    Name =  data[n][0] #lel is important cause it made me spent more than 4 hours debugging this app
+    Link = data[n][2]
+    receiver = data[n][1]
     msg =  """
 Este tambien puede estar en html.
 
@@ -275,5 +271,66 @@ def  send_mail(subject, msg, receiver_email):
 La lógica existente dentro de esta función responde a lo que previamente explicamos en la sección anterior, es basicamente el primer código explicado, con unas ligeras modificaciones para poder recibir las variables que se requieren para su funcionamiento.
 
 ## Alternativa de Wsp con selenium y WebDriver
+Usualmente las personas no suelen revisar sus correos, usualmente los mensajes que se envían por correo suelen perderse fácilmente, incluso muchas veces un error en el tipeo hace imposible poder contactarse con lxs oradorxs, por esos motivos planteo la posibilidad de enviar los url's personales y demás info de un torneo por Whatsapp. Esto necesariamente requiere permiso de lxs participantes y tiene limitaciones éticas en el uso de los números (al igual que en el uso de los correos).
+Hechas estas aclaraciones les presento el código, la parte final que automatiza el envío es identica a la que usa el código anterior. Probablemente lo explique con menos detalle que la idea inicial, pero en caso necesites alguna aclaración no dudes en escribirme.
+El código se basa en un paquete de python (`selenium` más especificamente `webdriver`)que permite el control automatico de un navegador, esto a través de la busqueda de aspectos específicos en su código HTML así como de acciones que se le puede ingresar o condiciones para que se cumplan estas acciones.
+Lo primero es importar llas librerías (previamente se tuvo que descarlas con `pip install selenium`):
+```python
 
-# UNDER CONSTRUCTION . . .
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+import csv    
+import time
+```
+Se define una función de modo que el código sea reusable para un bucle que envíe masivamente mensajes. Estas líneas de código serán descritas brevemente dado que no es objetivo de este repositorio explicarlas del todo. Igual habrán pequeñas descripciones al lado de cada linea de código.
+```python
+#Close all Chromes
+#http://web.whatsapp.com/send?phone=99999999999 Abre el chat con el número introducido
+def senderwsp(Numero, msg, reps):
+    webl= "http://web.whatsapp.com/send?phone="
+    Numero = str(Numero)
+    webl=webl+Numero #define la pagina web a abrir
+    options = webdriver.ChromeOptions();
+    options.add_argument('--user-data-dir=./User_Data')
+    driver = webdriver.Chrome(chrome_options=options)
+    driver.get(webl)
+    element = WebDriverWait(driver,100).until(EC.presence_of_element_located((By.ID, "side"))) #WAITS condición necesaria para que continue con el resto del programa, es importante cuando existe latencia en el server https://selenium-python.readthedocs.io/waits.html
+    
+    inp_xpath = '//div[@class="_3FRCZ copyable-text selectable-text"][@contenteditable="true"][@data-tab="1"]'  #Busca la linea HTML que tenga la clase introducida
+    #Esta clase depende de cada buscador y computadora así que será su deber buscarla (más abajito encontrará más info de como conseguirla)
+    msg_box = driver.find_element_by_xpath(inp_xpath)
+    for i in range(reps):
+        msg_box.send_keys(msg+ Keys.ENTER)
+    time.sleep(7) # espera en segundos para que el mensaje sea enviado antes de que se cierre la pestaña, depende de su velocidad de internet
+    driver.close()
+```
+Aquí la explicación detallada de como conseguir la clase, primero, la explicación que aquí encontrará esta orientada a personas que tengan Google Chrome como navegador predeterminado.
+Una vez dentro de whatsapp, haga click en algún contacto y luego ubique el cursor en la caja donde se introducen los mensajes a enviar. Luego anticlick y seleccione la opción de inspeccionar, lo enviará a la zona de desarrollador y se resaltará aquella seccion que referencia a la casilla donde se inserta en texto, busque la clase `class=` más cercana y será la que usará para esta sección del código.
+
+La siguiente sección del código es un copia y pega de lo que se uso en el código para enviar mails. Note que lo único que cambia es la función final a llamar.
+```python
+path=r'C:\Users\jugue\Documents\SENDAUTOWSP\numbers.csv'
+file = open(path, newline = '')
+reader=csv.reader(file)
+header = next(reader) #extract the first line as header
+data = [row for row in reader]
+a=len(data)
+done =0
+
+for n in range(a):
+    Name =  data[n][0] #n is the counter
+    celular = data[n][1]
+    link = data[n][2]
+    msge =  """."""
+
+    senderwsp(celular, msge ,1)
+    done = done +1
+    print(Name + " " + celular+ " ............. Done [" +str(done)+"/"+str(a)+"]")
+```
+Este código permite enviar mensajes a personas por whatsapp si tiene los datos necesarios para hacerlo espero lo haya explicado adecuadamente, igual si alguna parte del código no es del todo comprensible rogaría que me lo hagan saber para poder clarificarla uwu.
+
+
